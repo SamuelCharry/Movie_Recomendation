@@ -8,7 +8,7 @@ import NavBar from './Navbar';
 const commands = [
   {
     description: 'Clone the repository',
-    command: 'git clone https://github.com/dipanjanpathak/movierecommendation.git\ncd movierecommendation'
+    command: 'git clone https://github.com/dipanjanpathak/MERN_Movie_Recomendationn.git\ncd movierecommendation'
   },
   {
     description: 'Install backend dependencies',

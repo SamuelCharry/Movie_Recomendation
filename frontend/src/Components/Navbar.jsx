@@ -25,7 +25,12 @@ function NavBar() {
               <Nav.Link>
                 <i className="fa-solid fa-clipboard-question"></i>&nbsp; Project Details
               </Nav.Link>
+
+              
             </LinkContainer>
+            <Nav.Link href="https://github.com/dipanjanpathak/MERN_Movie_Recomendation" target="_blank" rel="noopener noreferrer">
+              <i className="fa-brands fa-github"></i>&nbsp; Project Code
+            </Nav.Link>
           </Nav>
           <Nav>
             <Nav.Link href="https://github.com/dipanjanpathak" target="_blank" rel="noopener noreferrer">

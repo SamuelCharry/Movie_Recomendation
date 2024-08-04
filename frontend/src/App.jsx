@@ -17,6 +17,7 @@ function App() {
             console.error('Error fetching recommendations', error);
         }
     };
+   
 
     return (
         <>
