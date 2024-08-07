@@ -16,7 +16,7 @@ venv/
 
 
 **/node_modules
-**/ProjectDetails.jsx
+
 
 # Jupyter Notebook
 .ipynb_checkpoints/
