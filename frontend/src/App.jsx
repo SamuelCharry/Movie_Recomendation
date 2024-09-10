@@ -30,9 +30,9 @@ function App() {
                 <p>
                     Type Movie name to get recommendations. e.g: 
                     <span style={{ color: 'blue' }}> Avatar</span>, 
-                    <span style={{ color: 'blue' }}> Titan A.E</span>, 
                     <span style={{ color: 'blue' }}> Aliens vs Predator: Requiem</span>, 
-                    <span style={{ color: 'blue' }}> Falcon Rising</span> etc.
+                    <span style={{ color: 'blue' }}> Spider-Man</span>,
+                    <span style={{ color: 'blue' }}> The Avengers</span> etc.
                 </p>
                 <Form className="w-50">
                     <Form.Group controlId="movieName">

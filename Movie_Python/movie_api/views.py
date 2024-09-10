@@ -44,37 +44,3 @@ def recommended(request, movie_id):
     except Exception as e:
         return Response({"error": str(e)}, status=500)
 
-
-
-
-
-
-
-# from rest_framework.response import Response
-# from rest_framework.decorators import api_view
-# import pandas as pd
-# from .config import movie_dict, similarity
-
-# movies = pd.DataFrame(movie_dict)
-
-# @api_view(['GET'])
-# def recommended(request, movie_id):
-#     recommended_movie_list_index = []
-
-#     try:
-#         movie_id = int(movie_id)
-#         if movie_id not in movies['movie_id'].values:
-#             return Response({"error": f"Movie ID {movie_id} not found in the dataset."}, status=404)
-
-#         movie_index = movies[movies['movie_id'] == movie_id].index[0]
-#         distances = similarity[movie_index]
-#         movies_list = sorted(list(enumerate(distances)), reverse=True, key=lambda x: x[1])[1:6]
-
-#         for i in movies_list:
-#             recommended_movie_list_index.append(movies.iloc[i[0]].movie_id)
-
-#         # Return JSON response
-#         return Response({"recommended_movies": recommended_movie_list_index})
-
-#     except ValueError:
-#         return Response({"error": "Invalid movie ID format. Please provide a numeric ID."}, status=400)
