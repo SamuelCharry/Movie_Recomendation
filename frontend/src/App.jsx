@@ -1,22 +1,22 @@
-import React, { useState } from 'react';
-import axios from 'axios';
-import { Container, Form, Button, Row, Col, Card, InputGroup } from 'react-bootstrap';
-import { Link } from 'react-router-dom';
-import NavBar from './Components/Navbar';
+import React, { useState } from 'react'
+import axios from 'axios'
+import { Container, Form, Button, Row, Col, Card, InputGroup } from 'react-bootstrap'
+import { Link } from 'react-router-dom'
+import NavBar from './Components/Navbar'
 
 function App() {
-    const [movieName, setMovieName] = useState('');
-    const [recommendations, setRecommendations] = useState([]);
+    const [movieName, setMovieName] = useState('')
+    const [recommendations, setRecommendations] = useState([])
 
     const fetchRecommendations = async () => {
         try {
-            const encodedMovieName = encodeURIComponent(movieName);
-            const response = await axios.get(`http://127.0.0.1:3050/api/movies/${encodedMovieName}`);
-            setRecommendations(response.data);
+            const encodedMovieName = encodeURIComponent(movieName)
+            const response = await axios.get(`http://127.0.0.1:3050/api/movies/${encodedMovieName}`)
+            setRecommendations(response.data)
         } catch (error) {
-            console.error('Error fetching recommendations', error);
+            console.error('Error fetching recommendations', error)
         }
-    };
+    }
    
 
     return (
@@ -84,7 +84,7 @@ function App() {
                 </Link>
             </Container>
         </>
-    );
+    )
 }
 
-export default App;
+export default App
