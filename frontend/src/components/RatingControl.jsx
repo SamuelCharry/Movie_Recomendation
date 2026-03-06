@@ -3,7 +3,6 @@ import React, { useState } from 'react';
 /**
  * RatingControl
  *
- * iOS-style star rating with half-star precision.
  *
  * Props:
  *   value     number | null   current rating (0.5–5.0 or null if unrated)
@@ -36,7 +35,6 @@ function RatingControl({ value, onChange, readOnly = false, size = 'md' }) {
     const { left, width } = e.currentTarget.getBoundingClientRect();
     const x = e.clientX - left;
     const newRating = x < width / 2 ? index - 0.5 : index;
-    // Clicking the same value deselects
     onChange(value === newRating ? null : newRating);
   };
 

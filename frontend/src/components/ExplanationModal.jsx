@@ -2,24 +2,6 @@ import React, { useState } from 'react';
 import { Modal, Row, Col } from 'react-bootstrap';
 import RatingControl from './RatingControl';
 
-/**
- * ExplanationModal
- *
- * Muestra una explicacion legible de por que se recomendo una pelicula,
- * basada en la salida del modelo de filtrado colaborativo.
- *
- * Props:
- *   show        boolean   si el modal esta visible
- *   onHide      function  callback al cerrar
- *   explanation object    resultado de api.explainRecommendation()
- *                         ver mock/mockData.js → MOCK_EXPLANATION para la forma exacta
- *   loading     boolean   mostrar spinner mientras carga
- *   movie       object    rec.{movieId, title} para el titulo del header
- *   modelParams object    params del modelo usados para generar esta rec.
- *
- * TODO (Personas 2, 3, 4): poblar explanation con la respuesta real de
- *   GET /api/users/:id/recommendations/:movieId/explain
- */
 function ExplanationModal({ show, onHide, explanation, loading, modelParams }) {
   const [tab, setTab] = useState('neighbors');
 
@@ -130,7 +112,7 @@ function ExplanationModal({ show, onHide, explanation, loading, modelParams }) {
                 <p style={{ fontSize: '0.875rem', color: '#8E8E93', marginBottom: 12 }}>
                   Usuarios con perfil de gustos similar al tuyo que valoraron esta pelicula. Sus ratings se ponderaron por similitud para predecir tu valoracion.
                 </p>
-                {/* TODO (Persona 2/3): neighborUsers viene de GET /api/users/:id/recommendations/:movieId/explain */}
+                {/* TODO: neighborUsers viene de GET /api/users/:id/recommendations/:movieId/explain */}
                 {(explanation.neighborUsers || []).length === 0 && (
                   <p style={{ color: '#C7C7CC', textAlign: 'center', padding: '20px 0', fontSize: '0.875rem' }}>
                     Sin datos de vecinos — conectar backend (Persona 2 o 3)
@@ -178,7 +160,7 @@ function ExplanationModal({ show, onHide, explanation, loading, modelParams }) {
                 <p style={{ fontSize: '0.875rem', color: '#8E8E93', marginBottom: 12 }}>
                   Items similares a esta pelicula que el usuario ya valoro. La similitud item-item propaga sus ratings a esta prediccion.
                 </p>
-                {/* TODO (Persona 4): neighborItems viene de GET /api/users/:id/recommendations/:movieId/explain (item-item) */}
+                {/* TODO : neighborItems viene de GET /api/users/:id/recommendations/:movieId/explain (item-item) */}
                 {(explanation.neighborItems || []).length === 0 && (
                   <p style={{ color: '#C7C7CC', textAlign: 'center', padding: '20px 0', fontSize: '0.875rem' }}>
                     Sin datos de items vecinos — conectar backend (Persona 4)

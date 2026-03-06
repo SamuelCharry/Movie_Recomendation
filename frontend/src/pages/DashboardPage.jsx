@@ -23,7 +23,7 @@ function Seg({ options, value, onChange }) {
   );
 }
 
-// ── Rating color helper ───────────────────────────────────────────
+
 const ratingColor = (r) => {
   if (r >= 4) return '#34C759';
   if (r >= 3) return '#FF9500';
@@ -31,20 +31,7 @@ const ratingColor = (r) => {
 };
 
 /**
- * DashboardPage
- *
- * Vista principal del usuario autenticado. Muestra:
- *   - Configuración del modelo de recomendación (Puntos 3 y 4 del taller)
- *   - Historial de ratings del usuario activo
- *   - Lista de recomendaciones con rating predicho
- *   - Modal de explicación de cada recomendación
- *   - Posibilidad de calificar cualquier recomendación en línea
- *
- * Props:
- *   user         — objeto usuario activo
- *   onLogout     — callback para cerrar sesión
- *   modelParams  — configuración del modelo (desde App.jsx)
- *   onModelParamsChange — actualiza params en App.jsx
+ * DashboardPage — Vista principal del usuario autenticado.
  */
 function DashboardPage({ user, onLogout, modelParams, onModelParamsChange }) {
   const navigate = useNavigate();
@@ -78,12 +65,10 @@ function DashboardPage({ user, onLogout, modelParams, onModelParamsChange }) {
     setRatingsLoading(true);
     setRecsLoading(true);
     setError('');
-    // TODO (Persona 1): GET /api/users/${user.userId}/ratings
     getUserRatings(user.userId)
       .then(r => setRatings(r.ratings || []))
       .catch(() => setError('Error al cargar ratings.'))
       .finally(() => setRatingsLoading(false));
-    // TODO (Personas 2, 3, 4): GET /api/users/${user.userId}/recommendations?${params}
     getRecommendations(user.userId, { ...params, limit: 10 })
       .then(r => setRecommendations(r.recommendations || []))
       .catch(() => setError('Error al cargar recomendaciones.'))
@@ -104,7 +89,6 @@ function DashboardPage({ user, onLogout, modelParams, onModelParamsChange }) {
     setExpl(null);
     setExplLoading(true);
     try {
-      // TODO (Personas 2-4): GET /api/users/${user.userId}/recommendations/${rec.movieId}/explain
       const { explanation } = await explainRecommendation(user.userId, rec.movieId, modelParams);
       setExpl(explanation);
     } catch {
@@ -118,7 +102,6 @@ function DashboardPage({ user, onLogout, modelParams, onModelParamsChange }) {
     if (inlineRating == null) return;
     setSavingRating(true);
     try {
-      // TODO (Persona 1): POST /api/users/${user.userId}/ratings  { movieId, rating }
       const { rating: newEntry } = await rateMovie(user.userId, rec.movieId, inlineRating);
       // Add to ratings history, remove from recommendations
       setRatings(prev => [newEntry, ...prev.filter(r => r.movieId !== rec.movieId)]);

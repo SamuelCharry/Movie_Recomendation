@@ -10,7 +10,6 @@
  */
 
 // ── EXPLICACIÓN DE MUESTRA ────────────────────────────────────────
-// Forma exacta que deben retornar los endpoints de explicación.
 export const MOCK_EXPLANATION = {
   userId: 1,
   movieId: 79132,
