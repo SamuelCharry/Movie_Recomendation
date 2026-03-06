@@ -1,90 +1,61 @@
-import React, { useState } from 'react'
-import axios from 'axios'
-import { Container, Form, Button, Row, Col, Card, InputGroup } from 'react-bootstrap'
-import { Link } from 'react-router-dom'
-import NavBar from './Components/Navbar'
+import React, { useState } from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import LoginPage      from './pages/LoginPage';
+import CreateUserPage from './pages/CreateUserPage';
+import DashboardPage  from './pages/DashboardPage';
+
+/**
+ * Configuracion por defecto del modelo de recomendacion.
+ *
+ * Estos valores se pasan a getRecommendations y explainRecommendation,
+ * y se pueden ajustar desde el panel de configuracion en DashboardPage.
+ *
+ * Corresponden a los parametros de los Puntos 3 y 4 del taller:
+ *   modelType            — Punto 3 (user-user) o Punto 4 (item-item)
+ *   similarity           — Jaccard | Cosine | Pearson
+ *   neighborMode / k     — Punto 3-d/4: k vecinos
+ *   neighborMode / th..  — Punto 3-d/4: umbral de similitud
+ *   significanceWeighting — Punto 3-e: ponderacion de McLaughlin
+ *   significanceAlpha    — Punto 3-e: parametro alpha de McLaughlin
+ */
+const DEFAULT_MODEL_PARAMS = {
+  modelType:             'user-user',
+  similarity:            'pearson',
+  neighborMode:          'k',
+  k:                     20,
+  threshold:             0.3,
+  significanceWeighting: false,
+  significanceAlpha:     50,
+};
 
 function App() {
-    const [movieName, setMovieName] = useState('')
-    const [recommendations, setRecommendations] = useState([])
+  const [user,        setUser]        = useState(null);
+  const [modelParams, setModelParams] = useState(DEFAULT_MODEL_PARAMS);
 
-    const fetchRecommendations = async () => {
-        try {
-            const encodedMovieName = encodeURIComponent(movieName)
-            const response = await axios.get(`http://127.0.0.1:3050/api/movies/${encodedMovieName}`)
-            setRecommendations(response.data)
-        } catch (error) {
-            console.error('Error fetching recommendations', error)
-        }
-    }
-   
-
-    return (
-        <>
-            <NavBar/>
-            <Container className="d-flex flex-column align-items-center" >
-                <h1 className="my-4" style={{ fontFamily: 'Poppins, sans-serif', fontWeight:'600' }}>Movie Recommender</h1>
-                <p className="my-2">
-                    (<span style={{ color: 'red' }}> <strong>MERN Stack, Django</strong> </span> based Movie recommendation app)
-                </p>
-                <p>
-                    Type Movie name to get recommendations. e.g: 
-                    <span style={{ color: 'blue' }}> Avatar</span>, 
-                    <span style={{ color: 'blue' }}> Aliens vs Predator: Requiem</span>, 
-                    <span style={{ color: 'blue' }}> Spider-Man</span>,
-                    <span style={{ color: 'blue' }}> The Avengers</span> etc.
-                </p>
-                <Form className="w-50">
-                    <Form.Group controlId="movieName">
-                        <InputGroup>
-                            <Form.Control
-                                type="text"
-                                placeholder="Enter movie name"
-                                value={movieName}
-                                onChange={(e) => setMovieName(e.target.value)}
-                            />
-                            <Button
-                                variant="primary"
-                                onClick={fetchRecommendations}
-                            >
-                                Get Recommendations
-                            </Button>
-                        </InputGroup>
-                    </Form.Group>
-                </Form>
-                <Container className="mt-4">
-                    <Row>
-                        {recommendations.map((movie) => (
-                            <Col md={4} key={movie._id} className="mb-4">
-                                <Card>
-                                    <Card.Body>
-                                        <Card.Title>{movie.title}</Card.Title>
-                                        {movie.tagline ? (
-                                            <Card.Subtitle className="mb-2 text-muted">Tagline: {movie.tagline}</Card.Subtitle>
-                                        ) : (
-                                            <Card.Subtitle className="mb-2" style={{ color: 'red' }}>No Tagline available</Card.Subtitle>
-                                        )}
-                                        <Card.Text>
-                                            <strong>Release Date:</strong> {movie.release_date.slice(0, 10)}
-                                        </Card.Text>
-                                        <Card.Text>
-                                            <strong>Duration:</strong> {movie.runtime} Minutes
-                                        </Card.Text>
-                                    </Card.Body>
-                                </Card>
-                            </Col>
-                        ))}
-                    </Row>
-                </Container>
-                <h5 style={{ color: 'red' }}>Note: Poster not available due to TMDB access issues.</h5>
-                <Link to='/overview'>
-                    <Button variant="link" style={{ marginTop: '20px' }}>
-                        Know more about the project
-                    </Button>
-                </Link>
-            </Container>
-        </>
-    )
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<LoginPage onLogin={setUser} />} />
+        <Route path="/create-user" element={<CreateUserPage onLogin={setUser} />} />
+        <Route
+          path="/dashboard"
+          element={
+            user ? (
+              <DashboardPage
+                user={user}
+                onLogout={() => setUser(null)}
+                modelParams={modelParams}
+                onModelParamsChange={setModelParams}
+              />
+            ) : (
+              <Navigate to="/" replace />
+            )
+          }
+        />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </BrowserRouter>
+  );
 }
 
-export default App
+export default App;
