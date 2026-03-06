@@ -1,70 +1,226 @@
-# Getting Started with Create React App
+# MovieLens Recommender — Frontend
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+Cascarón visual para el **Taller 1: Modelos Colaborativos** (MINE4201).
+Funciona sin backend usando datos de MovieLens 20M (películas reales) y mocks mínimos.
 
-## Available Scripts
+---
 
-In the project directory, you can run:
+## Inicio rápido
 
-### `npm start`
+```bash
+cd frontend
+npm install
+npm start
+# → http://localhost:3000
+```
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+IDs de demo: **1, 2, 3, 4** (usuarios reales de MovieLens 20M).
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+---
 
-### `npm test`
+## Estructura del proyecto
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+```
+frontend/src/
+  api/
+    api.js              — ÚNICO punto de integración con el backend
+  data/
+    movies.json         — catálogo real de MovieLens 20M (~110 películas representativas)
+  mock/
+    mockData.js         — stubs temporales con IDs reales de MovieLens
+  components/
+    ExplanationModal.jsx
+    RatingControl.jsx
+  pages/
+    LoginPage.jsx
+    CreateUserPage.jsx
+    DashboardPage.jsx
+  App.jsx               — routing + estado del modelo
+  index.js
+  index.css             — sistema de diseño global
+```
 
-### `npm run build`
+---
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+## Vistas
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+| Ruta | Página | Descripción |
+|---|---|---|
+| `/` | LoginPage | Login con userId del dataset o ir a registrarse |
+| `/create-user` | CreateUserPage | Buscar películas, asignar ratings, crear usuario |
+| `/dashboard` | DashboardPage | Historial, recomendaciones, configuración del modelo, modal de explicación |
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+---
 
-### `npm run eject`
+## Responsabilidades del equipo (5 personas)
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+| Persona | Punto del taller | Qué implementar en el backend | Funciones a conectar en `api.js` |
+|---|---|---|---|
+| **1** | Puntos 1 + 2 | Dataset, preprocesamiento, API de datos | `loginUser`, `getUserRatings`, `rateMovie`, `createUser`, `searchMovies` |
+| **2** | Punto 3-i | Modelo User-User con **Jaccard** | `getRecommendations` cuando `similarity='jaccard'` |
+| **3** | Puntos 3-ii/iii/e | Modelo User-User con **Cosine + Pearson + McLaughlin** | `getRecommendations` cuando `similarity='cosine'\|'pearson'`; `explainRecommendation` |
+| **4** | Punto 4 | Modelo **Item-Item** (los 3 modelos) | `getRecommendations` cuando `modelType='item-item'`; `explainRecommendation` (vecinos de ítems) |
+| **5** | Punto 5 | **Esta app web** | — integra todo |
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+---
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+## Cómo conectar el backend
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+Todo el tráfico pasa por **`src/api/api.js`**.
+Cada función tiene un comentario `TODO` indicando el endpoint exacto.
 
-## Learn More
+1. Levanta tu servidor (ej. `http://localhost:8000`).
+2. Descomenta/configura `BASE_URL` en `api.js`.
+3. Reemplaza el cuerpo de cada función stub por la llamada `fetch`/`axios` real.
+4. Mantener idénticas las firmas y formas de retorno — ninguna página necesita cambios.
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+---
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+## Contrato de API esperado
 
-### Code Splitting
+### Login
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+```
+POST /api/login
+Body:    { "userId": 1 }
+Retorna: { "user": { "userId", "displayName", "totalRatings", "joinedAt" } }
+         { "error": "..." }  si no existe
+```
 
-### Analyzing the Bundle Size
+### Crear usuario
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+```
+POST /api/users
+Body:    { "ratings": [{ "movieId": 318, "rating": 5.0 }, ...] }
+Retorna: { "user": { "userId", "displayName", "totalRatings", "joinedAt" } }
+```
 
-### Making a Progressive Web App
+### Historial de ratings
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+```
+GET /api/users/{userId}/ratings
+Retorna: {
+  "ratings": [
+    { "movieId": 318, "title": "Shawshank Redemption, The (1994)",
+      "genres": ["Crime","Drama"], "rating": 5.0, "ratedAt": "2000-07-30" },
+    ...
+  ]
+}
+```
 
-### Advanced Configuration
+### Agregar / actualizar rating
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+```
+POST /api/users/{userId}/ratings
+Body:    { "movieId": 79132, "rating": 4.5 }
+Retorna: { "rating": { "movieId", "title", "genres", "rating", "ratedAt" } }
+```
 
-### Deployment
+### Recomendaciones (con parámetros del modelo)
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+```
+GET /api/users/{userId}/recommendations
+    ?model=user-user          (o item-item)
+    &similarity=pearson       (o jaccard, cosine)
+    &neighbor_mode=k          (o threshold)
+    &k=20
+    &threshold=0.3
+    &significance_weighting=false
+    &significance_alpha=50
+    &limit=10
 
-### `npm run build` fails to minify
+Retorna: {
+  "recommendations": [
+    { "movieId": 79132, "title": "Inception (2010)",
+      "genres": ["Action","Sci-Fi"], "predictedRating": 4.8, "rank": 1 },
+    ...
+  ]
+}
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+### Explicación de una recomendación
+
+```
+GET /api/users/{userId}/recommendations/{movieId}/explain
+    ?model=user-user&similarity=pearson&...  (mismos params del modelo)
+
+Retorna: {
+  "explanation": {
+    "userId": 1,
+    "movieId": 79132,
+    "movieTitle": "Inception (2010)",
+    "movieGenres": ["Action","Sci-Fi","Thriller"],
+    "movieAvgRating": 4.18,
+    "predictedRating": 4.8,
+    "modelUsed": "User-User — Pearson, k=20",
+    "similarityMetric": "pearson",
+    "neighborsUsed": 20,
+
+    "userRatingsEvidence": [
+      { "movieId": 58559, "title": "Dark Knight, The (2008)",
+        "genres": ["Action","Crime"], "rating": 5.0, "similarity": 0.91 },
+      ...
+    ],
+
+    "neighborUsers": [                          ← solo en user-user
+      {
+        "userId": 3, "displayName": "Usuario 3",
+        "similarity": 0.89, "ratingForMovie": 4.5,
+        "sharedMovies": [
+          { "movieId": 318, "title": "...", "userRating": 5.0, "neighborRating": 5.0 },
+          ...
+        ]
+      },
+      ...
+    ],
+
+    "neighborItems": [                          ← solo en item-item (Persona 4)
+      { "movieId": 58559, "title": "Dark Knight, The (2008)",
+        "genres": ["Action","Crime"], "avgRating": 4.3, "similarity": 0.87 },
+      ...
+    ]
+  }
+}
+```
+
+### Búsqueda de películas
+
+```
+GET /api/movies/search?q=inception
+Retorna: {
+  "movies": [
+    { "movieId": 79132, "title": "Inception (2010)",
+      "genres": ["Action","Sci-Fi","Thriller"], "avgRating": 4.18 },
+    ...
+  ]
+}
+Nota: la búsqueda local ya usa el catálogo real de movies.json (MovieLens 20M).
+      Persona 1 puede reemplazar por búsqueda en el catálogo completo (~27.000 peliculas).
+```
+
+---
+
+## Dataset
+
+**MovieLens 20M** (GroupLens Research, University of Minnesota).
+- `ratings.csv` → interacción usuario-ítem (20M valoraciones, escala 0.5–5.0 en pasos de 0.5)
+- `movies.csv`  → catálogo de películas (movieId, título, géneros)
+- El archivo `src/data/movies.json` contiene ~110 películas representativas del dataset real.
+
+---
+
+## Scripts disponibles
+
+| Comando | Descripción |
+|---|---|
+| `npm start` | Dev server en `http://localhost:3000` |
+| `npm run build` | Build de producción en `build/` |
+
+---
+
+## Stack
+
+- React 18 · React Router v6
+- React-Bootstrap 2 · Bootstrap 5
+- Create React App (webpack)
+- Diseño: sistema iOS (SF Pro, #F2F2F7, #007AFF)
