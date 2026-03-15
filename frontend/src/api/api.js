@@ -1,88 +1,115 @@
-// api.js — Capa de integración con el backend
-// Conectar cada función con su endpoint real cuando el backend esté listo.
-// BASE_URL: 'http://localhost:8000/api'
+// api.js — Conectado al backend FastAPI (main.py)
+// Reemplaza src/api/api.js con este archivo completo.
 
-import MOVIES_FULL from '../data/movies-full.json';
-import SAMPLE_DATA from '../data/sample-data.json';
-import { MOCK_EXPLANATION } from '../mock/mockData';
+const BASE_URL = "http://localhost:8000/api";
 
-const delay = (ms = 350) => new Promise((r) => setTimeout(r, ms));
+async function apiFetch(path, options = {}) {
+  const res = await fetch(`${BASE_URL}${path}`, {
+    headers: { "Content-Type": "application/json" },
+    ...options,
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.detail || "Error en el servidor");
+  return data;
+}
 
+// ── Login con usuario existente ─────────────────────────────────────────────
+// El backend devuelve el usuario si existe en el dataset
 export async function loginUser(userId) {
-  await delay();
   const id = parseInt(userId, 10);
-  if (isNaN(id) || id < 1) return { error: 'Ingresa un ID de usuario válido.' };
-  // TODO Persona 2: POST /api/login  { userId }
-  const user = SAMPLE_DATA.users.find((u) => u.userId === id);
-  if (!user) {
-    const valid = SAMPLE_DATA.users.map((u) => u.userId).join(', ');
-    return { error: `Usuario ${id} no encontrado. IDs disponibles: ${valid}.` };
+  if (isNaN(id) || id < 1) return { error: "Ingresa un ID de usuario válido." };
+  try {
+    const data = await apiFetch(`/users/${id}`);
+    return { user: data.user };
+  } catch (e) {
+    return { error: e.message };
   }
-  return { user };
 }
 
+// ── Crear nuevo usuario con sus preferencias (punto b) ──────────────────────
+// ratings: [{movieId, rating}, ...]
 export async function createUser(payload) {
-  await delay(600);
-  // TODO Persona 2: POST /api/users  { ratings: [...] }
-  return {
-    user: {
-      userId:       Math.floor(Math.random() * 900000) + 100000,
-      displayName:  'Nuevo Usuario',
-      totalRatings: payload.ratings?.length ?? 0,
-      joinedAt:     new Date().toISOString().slice(0, 10),
-    },
-  };
+  try {
+    const data = await apiFetch("/users", {
+      method: "POST",
+      body: JSON.stringify({ ratings: payload.ratings ?? [] }),
+    });
+    return { user: data.user };
+  } catch (e) {
+    return { error: e.message };
+  }
 }
 
+// ── Historial de ratings del usuario ────────────────────────────────────────
+// Devuelve [{movieId, title, genres, rating, ratedAt}]
 export async function getUserRatings(userId) {
-  await delay();
-  // TODO Persona 2: GET /api/users/:id/ratings
-  return { ratings: SAMPLE_DATA.ratings[userId] ?? [] };
+  try {
+    return await apiFetch(`/users/${userId}/ratings`);
+  } catch (e) {
+    return { ratings: [] };
+  }
 }
 
+// ── Guardar un rating nuevo ──────────────────────────────────────────────────
 export async function rateMovie(userId, movieId, rating) {
-  await delay(300);
-  // TODO Persona 2: POST /api/users/:id/ratings  { movieId, rating }
-  const movie = MOVIES_FULL.find((m) => m.movieId === movieId);
-  return {
-    rating: {
-      movieId,
-      title:   movie?.title  ?? `Movie ${movieId}`,
-      genres:  movie?.genres ?? [],
-      rating,
-      ratedAt: new Date().toISOString().slice(0, 10),
-    },
-  };
+  try {
+    return await apiFetch(`/users/${userId}/ratings`, {
+      method: "POST",
+      body: JSON.stringify({ movieId, rating }),
+    });
+  } catch (e) {
+    return { error: e.message };
+  }
 }
 
-// params: { modelType, similarity, neighborMode, k, threshold, significanceWeighting, significanceAlpha, limit }
-// TODO Persona 3: user-user  → GET /api/users/:id/recommendations?model=user-user&similarity=...
-// TODO Persona 4: item-item  → GET /api/users/:id/recommendations?model=item-item&similarity=...
+// ── Recomendaciones del mejor modelo ────────────────────────────────────────
+// El backend usa siempre el mejor modelo guardado en el pickle.
+// params.limit controla cuántas recomendaciones devolver.
 export async function getRecommendations(userId, params = {}) {
-  await delay(700);
   const limit = params.limit ?? 10;
-  return { recommendations: (SAMPLE_DATA.recommendations[userId] ?? []).slice(0, limit) };
+  try {
+    return await apiFetch(`/users/${userId}/recommendations?limit=${limit}`);
+  } catch (e) {
+    return { recommendations: [] };
+  }
 }
 
-// TODO Persona 3/4: GET /api/users/:id/recommendations/:movieId/explain?model=...
+// ── Explicación de por qué se recomendó una película (punto c) ──────────────
+// Devuelve:
+//   movieTitle, movieGenres, movieAvgRating   → info del ítem
+//   predictedRating                           → rating que predijo el modelo
+//   modelUsed                                 → ej: "User-User — pearson, k=20"
+//   neighborUsers: [{                         → usuarios vecinos que influyeron
+//     displayName, similarity,                →   nombre + % similitud
+//     ratingForMovie,                         →   cómo calificó ESTA película
+//     sharedMovies: [{title, userRating,      →   películas en común
+//                     neighborRating}]
+//   }]
 export async function explainRecommendation(userId, movieId, params = {}) {
-  await delay(600);
-  const movie = MOVIES_FULL.find((m) => m.movieId === movieId);
-  return {
-    explanation: {
-      ...MOCK_EXPLANATION,
-      userId,
-      movieId,
-      movieTitle:  movie?.title  ?? MOCK_EXPLANATION.movieTitle,
-      movieGenres: movie?.genres ?? MOCK_EXPLANATION.movieGenres,
-    },
-  };
+  try {
+    return await apiFetch(
+      `/users/${userId}/recommendations/${movieId}/explain`
+    );
+  } catch (e) {
+    return { explanation: null };
+  }
 }
 
-// TODO Persona 2: GET /api/movies/search?q=...  (catálogo completo ~27k películas)
+// ── Búsqueda de películas por título ────────────────────────────────────────
 export async function searchMovies(query) {
-  await delay(150);
   if (!query || query.trim().length < 1) return { movies: [] };
-  const q = query.toLowerCase().trim();
-  return { movies: MOVIES_FULL.filter((m) => m.title.toLowerCase().includes(q)).slice(0, 20) };
+  try {
+    return await apiFetch(`/movies/search?q=${encodeURIComponent(query)}`);
+  } catch (e) {
+    return { movies: [] };
+  }
+}
+
+// Re-entrena el modelo con los ratings nuevos del usuario (~2-3 seg)
+export async function refreshRecommendations(userId) {
+  try {
+    return await apiFetch(`/users/${userId}/refresh`, { method: "POST" });
+  } catch (e) {
+    return { error: e.message };
+  }
 }
