@@ -78,3 +78,6 @@ $RECYCLE.BIN/
 # Exclude everything from `data/`, but allow `data/processed/` to be tracked
 data/*
 !data/processed/
+backend/model_cache.pkl
+backend/rating_sample.csv
+backend/user_ratings_extra.json
