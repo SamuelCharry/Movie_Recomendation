@@ -177,36 +177,34 @@ function DashboardPage({ user, onLogout, modelParams, onModelParamsChange }) {
           <div style={{ ...card, padding: '12px 16px' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
  
-              {/* Info fija del mejor modelo */}
-              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-                <span style={{ fontSize: '0.875rem', color: '#8E8E93' }}>Mejor modelo según experimentos:</span>
-                {[
-                  'pearson-baseline',
-                  'k_vecinos=50',
-                  'umbral_similitud=5',
-                  'gamma=200',
-                  'MAE=0.588',
-                  'RMSE=0.771',
-                ].map(tag => (
-                  <span key={tag} style={{
-                    display: 'inline-block', padding: '3px 10px', borderRadius: 6,
-                    background: 'rgba(52,199,89,0.1)', color: '#34C759',
-                    fontSize: '0.8125rem', fontWeight: 500,
-                  }}>
-                    {tag}
-                  </span>
-                ))}
-              </div>
- 
+            {/* Info fija del mejor modelo */}
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+              <span style={{ fontSize: '0.875rem', color: '#8E8E93' }}>Mejor modelo según experimentos:</span>
+              {(modelParams.modelType === 'user-user'
+                ? ['pearson-baseline', 'k_vecinos=50', 'min_k=5', 'gamma=200', 'MAE=0.588', 'RMSE=0.771']
+                : ['pearson', 'k_vecinos=20', 'MAE=???', 'RMSE=???']
+              ).map(tag => (
+                <span key={tag} style={{
+                  display: 'inline-block', padding: '3px 10px', borderRadius: 6,
+                  background: modelParams.modelType === 'user-user'
+                    ? 'rgba(52,199,89,0.1)' : 'rgba(0,122,255,0.1)',
+                  color: modelParams.modelType === 'user-user' ? '#34C759' : '#007AFF',
+                  fontSize: '0.8125rem', fontWeight: 500,
+                }}>
+                  {tag}
+                </span>
+              ))}
+            </div>
               {/* Toggle User-User / Item-Item */}
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <span style={{ fontSize: '0.875rem', color: '#1C1C1E', fontWeight: 500 }}>Tipo:</span>
                 <Seg
                   value={modelParams.modelType}
                   onChange={v => {
-                    onModelParamsChange({ ...modelParams, modelType: v });
-                    loadData({ ...modelParams, modelType: v });
-                  }}
+                        const newParams = { ...modelParams, modelType: v };
+                        onModelParamsChange(newParams);
+                        loadData(newParams);  
+                    }}
                   options={[
                     { label: 'User-User', value: 'user-user' },
                     { label: 'Item-Item', value: 'item-item' },
