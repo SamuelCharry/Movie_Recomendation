@@ -224,6 +224,21 @@ Si entras con un usuario nuevo (creado desde la app) y usas el modelo **Usuario-
 
 ---
 
+### Usuarios que funcionan bien en cada modelo desde el inicio
+
+**Ítem-Ítem** funciona correctamente para **cualquier usuario** desde el primer momento, sin importar el ID ni la cantidad de ratings previos.
+
+**Usuario-Usuario** solo funciona bien desde el inicio para los **2,000 usuarios más activos** que forman la matriz del modelo. De ese grupo, los primeros 20 (útiles para pruebas) son:
+
+```
+134, 156, 271, 294, 348, 394, 587, 631, 637, 648,
+710, 768, 847, 892, 982, 1154, 1185, 1200, 1296, 1421
+```
+
+Para cualquier otro ID (incluyendo usuarios creados desde la app), el modelo Usuario-Usuario necesita que el usuario califique al menos una película y pulse **"↻ Actualizar"** antes de mostrar recomendaciones.
+
+---
+
 ## Solución de problemas frecuentes
 
 | Problema | Causa | Solución |
