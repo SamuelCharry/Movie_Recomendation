@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Row, Col, Spinner } from 'react-bootstrap';
-import { getUserRatings, getRecommendations, explainRecommendation, rateMovie } from '../api/api';
+import { getUserRatings, getRecommendations, explainRecommendation, rateMovie,refreshRecommendations} from '../api/api';
 import RatingControl from '../components/RatingControl';
 import ExplanationModal from '../components/ExplanationModal';
+
 
 // ── Segmented control helper ─────────────────────────────────────
 function Seg({ options, value, onChange }) {
@@ -103,9 +104,11 @@ function DashboardPage({ user, onLogout, modelParams, onModelParamsChange }) {
     setSavingRating(true);
     try {
       const { rating: newEntry } = await rateMovie(user.userId, rec.movieId, inlineRating);
-      // Add to ratings history, remove from recommendations
+      // Agrega al historial
       setRatings(prev => [newEntry, ...prev.filter(r => r.movieId !== rec.movieId)]);
-      setRecommendations(prev => prev.filter(r => r.movieId !== rec.movieId));
+      // Recarga recomendaciones para mantener siempre 10
+      const { recommendations: newRecs } = await getRecommendations(user.userId, { ...modelParams, limit: 10 });
+      setRecommendations(newRecs || []);
     } finally {
       setSavingRating(false);
       setRatingMovieId(null);
@@ -168,147 +171,49 @@ function DashboardPage({ user, onLogout, modelParams, onModelParamsChange }) {
           </p>
         </div>
 
-        {/* ── Model configuration (collapsible) ───────────────── */}
+        {/* ── Model configuration ─────────────────────────────── */}
         <div style={{ marginBottom: 28 }}>
-          <button
-            onClick={() => setConfigOpen(o => !o)}
-            style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}
-          >
-            <span style={sectionLabel}>Configuracion del Modelo</span>
-            <span style={{ color: '#8E8E93', fontSize: '0.8rem', transform: configOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s', display: 'inline-block' }}>▲</span>
-          </button>
-
-          {configOpen && (
-            <div style={{ ...card, padding: '4px 16px 16px' }}>
-              {/* Model type */}
-              <div style={configRow}>
-                <div>
-                  <div style={configLabel}>Tipo de modelo</div>
-                  <div style={configDesc}>User-User (Punto 3) o Item-Item (Punto 4)</div>
-                </div>
-                <Seg
-                  value={localParams.modelType}
-                  onChange={v => setLocalParams(p => ({ ...p, modelType: v }))}
-                  options={[{ label: 'User-User', value: 'user-user' }, { label: 'Item-Item', value: 'item-item' }]}
-                />
-              </div>
-
-              {/* Similarity */}
-              <div style={configRow}>
-                <div>
-                  <div style={configLabel}>Similitud</div>
-                  <div style={configDesc}>Métrica para calcular vecindad</div>
-                </div>
-                <Seg
-                  value={localParams.similarity}
-                  onChange={v => setLocalParams(p => ({ ...p, similarity: v }))}
-                  options={[{ label: 'Jaccard', value: 'jaccard' }, { label: 'Cosine', value: 'cosine' }, { label: 'Pearson', value: 'pearson' }]}
-                />
-              </div>
-
-              {/* Neighbor mode */}
-              <div style={configRow}>
-                <div>
-                  <div style={configLabel}>Selección de vecinos</div>
-                  <div style={configDesc}>Por cantidad fija (k) o umbral de similitud</div>
-                </div>
-                <Seg
-                  value={localParams.neighborMode}
-                  onChange={v => setLocalParams(p => ({ ...p, neighborMode: v }))}
-                  options={[{ label: 'k vecinos', value: 'k' }, { label: 'Umbral', value: 'threshold' }]}
-                />
-              </div>
-
-              {/* k or threshold value */}
-              <div style={configRow}>
-                <div>
-                  <div style={configLabel}>
-                    {localParams.neighborMode === 'k' ? 'Número de vecinos (k)' : 'Umbral de similitud'}
-                  </div>
-                  <div style={configDesc}>
-                    {localParams.neighborMode === 'k' ? 'Usuarios/ítems más cercanos a considerar' : 'Similitud mínima para incluir un vecino (0–1)'}
-                  </div>
-                </div>
-                <input
-                  type="number"
-                  min={localParams.neighborMode === 'k' ? 1 : 0}
-                  max={localParams.neighborMode === 'k' ? 500 : 1}
-                  step={localParams.neighborMode === 'k' ? 1 : 0.05}
-                  value={localParams.neighborMode === 'k' ? localParams.k : localParams.threshold}
-                  onChange={e => {
-                    const v = parseFloat(e.target.value);
-                    setLocalParams(p => localParams.neighborMode === 'k' ? { ...p, k: v } : { ...p, threshold: v });
-                  }}
-                  style={{ width: 72, height: 34, borderRadius: 8, border: '1px solid rgba(60,60,67,0.18)', padding: '0 8px', textAlign: 'center', fontSize: '0.9375rem' }}
-                />
-              </div>
-
-              {/* McLaughlin significance weighting */}
-              <div style={configRow}>
-                <div>
-                  <div style={configLabel}>Ponderacion McLaughlin</div>
-                  <div style={configDesc}>Penaliza vecinos con pocos items en común (Punto 3-e)</div>
-                </div>
-                <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
-                  <div
-                    onClick={() => setLocalParams(p => ({ ...p, significanceWeighting: !p.significanceWeighting }))}
-                    style={{
-                      width: 44, height: 24, borderRadius: 12,
-                      background: localParams.significanceWeighting ? '#34C759' : '#E5E5EA',
-                      position: 'relative', transition: 'background 0.2s', cursor: 'pointer',
-                    }}
-                  >
-                    <div style={{
-                      position: 'absolute', top: 2, left: localParams.significanceWeighting ? 22 : 2,
-                      width: 20, height: 20, borderRadius: '50%', background: '#FFFFFF',
-                      boxShadow: '0 1px 3px rgba(0,0,0,0.2)', transition: 'left 0.2s',
-                    }} />
-                  </div>
-                </label>
-              </div>
-
-              {/* McLaughlin alpha (only if significance weighting is on) */}
-              {localParams.significanceWeighting && (
-                <div style={{ ...configRow, borderBottom: 'none' }}>
-                  <div>
-                    <div style={configLabel}>Alpha de McLaughlin</div>
-                    <div style={configDesc}>Numero minimo de items en comun para no penalizar</div>
-                  </div>
-                  <input
-                    type="number" min={1} max={500} step={1}
-                    value={localParams.significanceAlpha}
-                    onChange={e => setLocalParams(p => ({ ...p, significanceAlpha: parseInt(e.target.value) }))}
-                    style={{ width: 72, height: 34, borderRadius: 8, border: '1px solid rgba(60,60,67,0.18)', padding: '0 8px', textAlign: 'center', fontSize: '0.9375rem' }}
-                  />
-                </div>
-              )}
-
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 12 }}>
-                <button onClick={() => setConfigOpen(false)} style={{ height: 36, padding: '0 16px', borderRadius: 8, background: '#F2F2F7', border: 'none', color: '#1C1C1E', fontSize: '0.875rem', cursor: 'pointer' }}>
-                  Cancelar
-                </button>
-                <button onClick={applyParams} style={{ height: 36, padding: '0 16px', borderRadius: 8, background: '#007AFF', border: 'none', color: '#FFF', fontSize: '0.875rem', fontWeight: 600, cursor: 'pointer' }}>
-                  Actualizar recomendaciones
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* Summary of current config */}
-          {!configOpen && (
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-              {[
-                modelParams.modelType === 'user-user' ? 'User-User' : 'Item-Item',
-                modelParams.similarity.charAt(0).toUpperCase() + modelParams.similarity.slice(1),
-                modelParams.neighborMode === 'k' ? `k=${modelParams.k}` : `umbral=${modelParams.threshold}`,
-                modelParams.significanceWeighting ? `McLaughlin α=${modelParams.significanceAlpha}` : null,
-              ].filter(Boolean).map(tag => (
-                <span key={tag} style={{ display: 'inline-block', padding: '3px 10px', borderRadius: 6, background: 'rgba(0,122,255,0.1)', color: '#007AFF', fontSize: '0.8125rem', fontWeight: 500 }}>
+          <p style={sectionLabel}>Modelo activo</p>
+          <div style={{ ...card, padding: '12px 16px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+ 
+            {/* Info fija del mejor modelo */}
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+              <span style={{ fontSize: '0.875rem', color: '#8E8E93' }}>Mejor modelo según experimentos:</span>
+              {(modelParams.modelType === 'user-user'
+                ? ['pearson-baseline', 'k_vecinos=50', 'min_k=5', 'gamma=200', 'MAE=0.588', 'RMSE=0.771']
+                : ['pearson', 'k_vecinos=20', 'MAE=???', 'RMSE=???']
+              ).map(tag => (
+                <span key={tag} style={{
+                  display: 'inline-block', padding: '3px 10px', borderRadius: 6,
+                  background: modelParams.modelType === 'user-user'
+                    ? 'rgba(52,199,89,0.1)' : 'rgba(0,122,255,0.1)',
+                  color: modelParams.modelType === 'user-user' ? '#34C759' : '#007AFF',
+                  fontSize: '0.8125rem', fontWeight: 500,
+                }}>
                   {tag}
                 </span>
               ))}
             </div>
-          )}
+              {/* Toggle User-User / Item-Item */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <span style={{ fontSize: '0.875rem', color: '#1C1C1E', fontWeight: 500 }}>Tipo:</span>
+                <Seg
+                  value={modelParams.modelType}
+                  onChange={v => {
+                        const newParams = { ...modelParams, modelType: v };
+                        onModelParamsChange(newParams);
+                        loadData(newParams);  
+                    }}
+                  options={[
+                    { label: 'User-User', value: 'user-user' },
+                    { label: 'Item-Item', value: 'item-item' },
+                  ]}
+                />
+              </div>
+ 
+            </div>
+          </div>
         </div>
 
         {/* ── Main content ─────────────────────────────────────── */}
@@ -354,7 +259,22 @@ function DashboardPage({ user, onLogout, modelParams, onModelParamsChange }) {
           {/* RIGHT — Recommendations */}
           <Col lg={8}>
             <div style={section}>
-              <p style={sectionLabel}>Recomendaciones para ti</p>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                <p style={{ ...sectionLabel, marginBottom: 0 }}>Recomendaciones para ti</p>
+                <button
+                  onClick={async () => {
+                    setRecsLoading(true);
+                    await refreshRecommendations(user.userId);
+                    const { recommendations: newRecs } = await getRecommendations(user.userId, { ...modelParams, limit: 10 });
+                    setRecommendations(newRecs || []);
+                    setRecsLoading(false);
+                  }}
+                  disabled={recsLoading}
+                  style={{ height: 30, padding: '0 12px', borderRadius: 8, background: 'rgba(0,122,255,0.08)', border: 'none', fontSize: '0.8125rem', fontWeight: 500, color: '#007AFF', cursor: 'pointer' }}
+                >
+                  {recsLoading ? 'Actualizando...' : '↻ Actualizar'}
+                </button>
+              </div>
 
               {recsLoading ? (
                 <div style={{ ...card, padding: 48, textAlign: 'center' }}>

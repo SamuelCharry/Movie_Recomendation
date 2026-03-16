@@ -70,14 +70,12 @@ function ExplanationModal({ show, onHide, explanation, loading, modelParams }) {
                     <span>Rating promedio global: {explanation.movieAvgRating?.toFixed(2)}</span>
                     <span>Modelo: {explanation.modelUsed}</span>
                   </div>
-                  {modelParams && (
+                  {explanation.modelUsed && (
                     <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 8 }}>
-                      {[
-                        modelParams.modelType, modelParams.similarity,
-                        modelParams.neighborMode === 'k' ? `k=${modelParams.k}` : `umbral=${modelParams.threshold}`,
-                        modelParams.significanceWeighting ? `McLaughlin` : null,
-                      ].filter(Boolean).map(t => (
-                        <span key={t} style={{ padding: '2px 8px', background: '#F2F2F7', color: '#8E8E93', borderRadius: 5, fontSize: '0.75rem' }}>{t}</span>
+                      {explanation.modelUsed.split(/[\s,]+/).filter(Boolean).map(t => (
+                        <span key={t} style={{ padding: '2px 8px', background: '#F2F2F7', color: '#8E8E93', borderRadius: 5, fontSize: '0.75rem' }}>
+                          {t}
+                        </span>
                       ))}
                     </div>
                   )}
@@ -115,7 +113,7 @@ function ExplanationModal({ show, onHide, explanation, loading, modelParams }) {
                 {/* TODO: neighborUsers viene de GET /api/users/:id/recommendations/:movieId/explain */}
                 {(explanation.neighborUsers || []).length === 0 && (
                   <p style={{ color: '#C7C7CC', textAlign: 'center', padding: '20px 0', fontSize: '0.875rem' }}>
-                    Sin datos de vecinos — conectar backend (Persona 2 o 3)
+                    Ninguno de tus usuarios similares calificó esta película directamente.
                   </p>
                 )}
                 {explanation.neighborUsers?.map(n => (
